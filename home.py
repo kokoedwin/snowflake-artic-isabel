@@ -14,3 +14,12 @@ results = st.text_area("Results", placeholder="Summarize the results of your ana
 conclusion = st.text_area("Conclusion", placeholder="Summarize your conclusions")
 recommendations = st.text_area("Recommendations", placeholder="Enter any actionable recommendations")
 references = st.text_area("References", placeholder="List any references or citations")
+
+
+if st.button("Generate Documentation"):
+    if all([title, code, insights, data_sources, methodology, results, conclusion, recommendations, references]):
+        documentation = generate_documentation(title, code, insights, data_sources, methodology, results, conclusion, recommendations, references)
+        st.markdown("### Generated Documentation")
+        st.markdown(documentation)
+    else:
+        st.warning("Please fill in all fields to generate documentation.")
