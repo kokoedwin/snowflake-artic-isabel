@@ -1,32 +1,49 @@
+import os
 import streamlit as st
-import requests
+import replicate
+from dotenv import load_dotenv
 
-# Function to generate documentation using Replicate
+# Load environment variables from .env file
+load_dotenv()
+
+# Get the API key from environment variable
+REPLICATE_API_KEY = os.getenv("REPLICATE_API_KEY")
+
+# Function to generate documentation using Replicate with streaming output
 def generate_documentation_with_replicate(title, code, insights, data_sources, methodology, results, conclusion, recommendations, references):
-    api_url = "https://api.replicate.com/v1/predictions"
-    headers = {
-        "Authorization": "r8_GYW7N0jnSLhjTuspToX1fzbvIdRJnBv4Jepfq",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "input": {
-            "title": title,
-            "code": code,
-            "insights": insights,
-            "data_sources": data_sources,
-            "methodology": methodology,
-            "results": results,
-            "conclusion": conclusion,
-            "recommendations": recommendations,
-            "references": references
+    prompt = f"""
+    Project Title: {title}
+    Code Snippets: {code}
+    Insights: {insights}
+    Data Sources: {data_sources}
+    Methodology: {methodology}
+    Results: {results}
+    Conclusion: {conclusion}
+    Recommendations: {recommendations}
+    References: {references}
+    """
+    
+    # Setting up the streaming
+    response = ""
+    for event in replicate.stream(
+        "snowflake/snowflake-arctic-instruct",
+        input={
+            "top_k": 50,
+            "top_p": 0.9,
+            "prompt": prompt,
+            "temperature": 0.2,
+            "max_new_tokens": 512,
+            "min_new_tokens": 0,
+            "stop_sequences": "",
+            "prompt_template": "system\nYou're a helpful assistant\nuser\n{prompt}\n\nassistant\n",
+            "presence_penalty": 1.15,
+            "frequency_penalty": 0.2
         },
-        "model": "your-replicate-model-identifier"  # Replace with the actual model identifier
-    }
-    response = requests.post(api_url, headers=headers, json=payload)
-    if response.status_code == 200:
-        return response.json().get("output", "No documentation generated")
-    else:
-        return "Error generating documentation"
+        api_token=REPLICATE_API_KEY
+    ):
+        response += str(event)
+    
+    return response
 
 st.title("ISABEL: Documentation Generator for Analysts")
 
@@ -45,8 +62,9 @@ references = st.text_area("References", placeholder="List any references or cita
 
 if st.button("Generate Documentation"):
     if all([title, code, insights, data_sources, methodology, results, conclusion, recommendations, references]):
-        documentation = generate_documentation_with_replicate(title, code, insights, data_sources, methodology, results, conclusion, recommendations, references)
-        st.markdown("### Generated Documentation")
-        st.markdown(documentation)
+        with st.spinner('Generating documentation...'):
+            documentation = generate_documentation_with_replicate(title, code, insights, data_sources, methodology, results, conclusion, recommendations, references)
+            st.markdown("### Generated Documentation")
+            st.markdown(documentation)
     else:
         st.warning("Please fill in all fields to generate documentation.")
