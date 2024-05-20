@@ -1,13 +1,13 @@
 import os
 import streamlit as st
 import replicate
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 
 # Load environment variables from .env file
-load_dotenv()
+#load_dotenv()
 
 # Get the API key from environment variable
-REPLICATE_API_KEY = os.getenv("REPLICATE_API_KEY")
+REPLICATE_API_KEY = "r8_GYW7N0jnSLhjTuspToX1fzbvIdRJnBv4Jepfq"
 
 # Function to generate documentation using Replicate with streaming output
 def generate_documentation_with_replicate(title, code, insights, data_sources, methodology, results, conclusion, recommendations, references):
